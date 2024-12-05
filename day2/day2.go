@@ -1,3 +1,4 @@
+// problem: https://adventofcode.com/2024/day/2
 package main
 
 import (
