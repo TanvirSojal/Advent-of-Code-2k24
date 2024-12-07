@@ -106,12 +106,6 @@ func checkLoop(grid [][]int, height int, width int, pos position) bool {
 
 	visited := make(map[position]int)
 
-	spot := make([][]int, height)
-
-	for i := range spot {
-		spot[i] = make([]int, width)
-	}
-
 	for {
 		// bitwise operation to check
 		// if the same spot was visited again from the same direction!
@@ -121,12 +115,6 @@ func checkLoop(grid [][]int, height int, width int, pos position) bool {
 
 		// mark only the direction bits (to keep up to 4 directions in a single int)
 		visited[pos] = visited[pos] | direction
-
-		spot[pos.x][pos.y]++
-
-		if spot[pos.x][pos.y] > 1000 {
-			break
-		}
 
 		nextX := pos.x + dx
 		nextY := pos.y + dy
