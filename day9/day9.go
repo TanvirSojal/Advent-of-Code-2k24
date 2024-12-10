@@ -40,7 +40,7 @@ func main() {
 
 	input := strings.TrimSpace(string(inputFile))
 
-	files, spaces, size := processInputMemory(input)
+	files, spaces, _ := processInputMemory(input)
 
 	spaceIndex := 0
 
@@ -71,7 +71,6 @@ func main() {
 				files[i].blocks = append(files[i].blocks, leftoverBlock)
 
 			} else { // store last block and exit loop
-				fmt.Println("Store entire block", files[i].id)
 				// store file
 				lastBlock.start_index = spaces[spaceIndex].start_index
 				lastBlock.end_index = lastBlock.start_index + lastBlockSize - 1
@@ -86,9 +85,26 @@ func main() {
 		}
 	}
 
-	fmt.Println(files)
+	// printMemory(size, files)
 
-	printMemory(size, files)
+	checksum := calculateChecksum(files)
+
+	fmt.Println(checksum)
+}
+
+func calculateChecksum(files []file) int {
+
+	checksum := 0
+
+	for _, file := range files {
+		for _, block := range file.blocks {
+			for index := block.start_index; index <= block.end_index; index++ {
+				checksum += (file.id * index)
+			}
+		}
+	}
+
+	return checksum
 }
 
 func processInputMemory(input string) ([]file, []block, int) {
