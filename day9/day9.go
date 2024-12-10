@@ -48,7 +48,7 @@ func main() {
 		for ; spaceIndex < len(spaces); spaceIndex++ {
 			// if space is on the right side, do not move file
 			if spaces[spaceIndex].start_index > files[i].getLastBlock().start_index {
-				continue
+				break
 			}
 
 			lastBlock := files[i].getLastBlock()
