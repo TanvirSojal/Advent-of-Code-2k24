@@ -40,6 +40,12 @@ func main() {
 
 	input := strings.TrimSpace(string(inputFile))
 
+	performDefragmentation(input)
+
+	performCompaction(input)
+}
+
+func performDefragmentation(input string) {
 	files, spaces, _ := processInputMemory(input)
 
 	spaceIndex := 0
@@ -71,6 +77,43 @@ func main() {
 				files[i].blocks = append(files[i].blocks, leftoverBlock)
 
 			} else { // store last block and exit loop
+				// store file
+				lastBlock.start_index = spaces[spaceIndex].start_index
+				lastBlock.end_index = lastBlock.start_index + lastBlockSize - 1
+
+				files[i].setLastBlock(lastBlock)
+
+				// update space info
+				spaces[spaceIndex].start_index = lastBlock.end_index + 1
+
+				break
+			}
+		}
+	}
+
+	// printMemory(size, files)
+
+	checksum := calculateChecksum(files)
+
+	fmt.Println(checksum)
+}
+
+func performCompaction(input string) {
+	files, spaces, _ := processInputMemory(input)
+
+	for i := len(files) - 1; i >= 0; i-- {
+		for spaceIndex := 0; spaceIndex < len(spaces); spaceIndex++ {
+			// if space is on the right side, do not move file
+			if spaces[spaceIndex].start_index > files[i].getLastBlock().start_index {
+				break
+			}
+
+			lastBlock := files[i].getLastBlock()
+			lastBlockSize := lastBlock.getSize()
+
+			spaceSize := spaces[spaceIndex].getSize()
+
+			if spaceSize >= lastBlockSize { // only move if entire file can be moved
 				// store file
 				lastBlock.start_index = spaces[spaceIndex].start_index
 				lastBlock.end_index = lastBlock.start_index + lastBlockSize - 1
@@ -151,4 +194,12 @@ func printMemory(size int, files []file) {
 		fmt.Printf("%c", mem[i])
 	}
 	fmt.Println()
+}
+
+func copyOf[T any](items []T) []T {
+	duplicate := make([]T, len(items))
+
+	copy(duplicate, items)
+
+	return duplicate
 }
