@@ -29,28 +29,22 @@ func main() {
 
 	dp = make(map[int][75]int)
 
-	// iteration 25 sum 220722 time 1.0109ms
+	// iteration 25 answer 220722 time 1.0952ms
 	performBlinks(copyOf(stones), 25)
-	// iteration 75 sum 261952051690787 time 21.5553ms
+	// iteration 75 answer 261952051690787 time 21.4174ms
 	performBlinks(copyOf(stones), 75)
 }
 
 func performBlinks(stones []int, count int) {
 	start := time.Now()
 
-	answers := make([]int, len(stones))
+	answer := 0
 
 	for i := range stones {
-		answers[i] = dfs(stones[i], count-1) // count-1 to iterate over [0 - range)
+		answer += dfs(stones[i], count-1) // count-1 to iterate over [0 - range)
 	}
 
-	sum := 0
-
-	for i := range answers {
-		sum += answers[i]
-	}
-
-	fmt.Println("iteration", count, "sum", sum, "time", time.Since(start))
+	fmt.Println("iteration", count, "answer", answer, "time", time.Since(start))
 }
 
 func dfs(stone int, depth int) int {
