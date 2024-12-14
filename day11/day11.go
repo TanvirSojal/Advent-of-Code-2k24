@@ -3,12 +3,14 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
+
+var dp map[int][75]int
 
 func main() {
 	file, err := os.ReadFile("input.txt")
@@ -25,7 +27,12 @@ func main() {
 		stones[i], _ = strconv.Atoi(str)
 	}
 
+	dp = make(map[int][75]int)
+
+	// iteration 25 sum 220722 time 1.0109ms
 	performBlinks(copyOf(stones), 25)
+	// iteration 75 sum 261952051690787 time 21.5553ms
+	performBlinks(copyOf(stones), 75)
 }
 
 func performBlinks(stones []int, count int) {
@@ -33,19 +40,9 @@ func performBlinks(stones []int, count int) {
 
 	answers := make([]int, len(stones))
 
-	var wg sync.WaitGroup
-
 	for i := range stones {
-		wg.Add(1)
-
-		// parallel simulations for every stone
-		go func(index, stone, count int) {
-			defer wg.Done()
-			answers[index] = simulateBlinks(stone, count)
-		}(i, stones[i], count)
+		answers[i] = dfs(stones[i], count-1) // count-1 to iterate over [0 - range)
 	}
-
-	wg.Wait()
 
 	sum := 0
 
@@ -53,83 +50,48 @@ func performBlinks(stones []int, count int) {
 		sum += answers[i]
 	}
 
-	fmt.Println("iteration", count, "parallel", sum, "time", time.Since(start))
+	fmt.Println("iteration", count, "sum", sum, "time", time.Since(start))
 }
 
-func simulateBlinks(stone int, count int) int {
-	list := []int{stone}
-
-	for blink := 1; blink <= count; blink++ {
-		fmt.Println("for", stone, "iteration", blink, "list size", len(list))
-		list = applyRules(list)
+func dfs(stone int, depth int) int {
+	if depth < 0 {
+		return 1
 	}
 
-	return len(list)
-}
-
-func applyRules(stones []int) []int {
-	newStones := make([]int, 0)
-
-	size := len(stones)
-
-	for i := 0; i < size; i++ {
-		newStones = append(newStones, applyRule(stones[i])...)
+	if dp[stone][depth] > 0 {
+		return dp[stone][depth]
 	}
 
-	return newStones
-}
-
-func applyRule(stone int) []int {
-	result := make([]int, 0)
+	var memo = dp[stone]
 
 	if stone == 0 {
-		result = append(result, 1)
-		return result
+		memo[depth] = dfs(1, depth-1)
+		dp[stone] = memo
+		return dp[stone][depth]
 	}
 
-	digits := getDigits(stone)
+	digits := getDigitCount(stone)
 
-	if len(digits)%2 == 0 {
-
-		mid := len(digits) / 2
-
-		result = append(result, buildNumber(digits[:mid]))
-		result = append(result, buildNumber(digits[mid:]))
-
-		return result
+	if digits%2 == 0 {
+		div := int(math.Pow(10, float64(digits/2)))
+		memo[depth] = dfs(stone/div, depth-1) + dfs(stone%div, depth-1)
+		dp[stone] = memo
+		return dp[stone][depth]
 	}
 
-	result = append(result, stone*2024)
+	memo[depth] = dfs(stone*2024, depth-1)
+	dp[stone] = memo
 
-	return result
+	return dp[stone][depth]
 }
 
-func getDigits(num int) []int {
-	digits := make([]int, 0)
-
+func getDigitCount(num int) int {
+	count := 0
 	for num != 0 {
-		digits = append(digits, num%10)
 		num /= 10
+		count++
 	}
-
-	for i, j := 0, len(digits)-1; i < j; i, j = i+1, j-1 {
-		digits[i], digits[j] = digits[j], digits[i]
-	}
-
-	return digits
-}
-
-func buildNumber(digits []int) int {
-	d := 1
-
-	num := 0
-
-	for i := len(digits) - 1; i >= 0; i-- {
-		num += (digits[i] * d)
-		d *= 10
-	}
-
-	return num
+	return count
 }
 
 func copyOf(arr []int) []int {
