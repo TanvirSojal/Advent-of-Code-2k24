@@ -24,7 +24,7 @@ func main() {
 
 	games := parseGames(file)
 
-	calculateMinimumTokens(games, 100)
+	calculateMinimumTokens(games)
 
 	// modify prize location based on 2nd half requirement
 	for i := range games {
@@ -32,38 +32,35 @@ func main() {
 		games[i].py += 10000000000000
 	}
 
-	// calculateMinimumTokens(games, 10000000000000)
+	calculateMinimumTokens(games)
 }
 
-func calculateMinimumTokens(games []game, limit int) {
+func calculateMinimumTokens(games []game) {
 	answer := 0
 
 	for _, game := range games {
-		answer += play(game, limit)
+		answer += play(game)
 	}
 
 	fmt.Println(answer)
 }
 
-func play(game game, limit int) int {
-	best := 0
-	possible := false
+func play(game game) int {
+	ax, ay, bx, by, px, py := game.ax, game.ay, game.bx, game.by, game.px, game.py
 
-	for i := 0; i <= limit; i++ {
-		_x := game.px - (game.ax * i)
-		_y := game.py - (game.ay * i)
+	numerator := ((bx + by) * px) - (bx * (px + py))
 
-		if _x%game.bx == 0 && _y%game.by == 0 && _x/game.bx == _y/game.by && _x/game.bx <= 100 {
-			spent := 3*i + (_x / game.bx)
+	denominator := ((bx + by) * ax) - (bx * (ax + ay))
 
-			if !possible || spent < best {
-				best = spent
-				possible = true
-			}
-		}
+	if numerator%denominator != 0 {
+		return 0
 	}
 
-	return best
+	a := numerator / denominator
+
+	b := (px - (ax * a)) / bx
+
+	return a*3 + b
 }
 
 func parseGames(file *os.File) []game {
