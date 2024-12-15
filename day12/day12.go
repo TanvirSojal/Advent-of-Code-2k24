@@ -14,11 +14,6 @@ const down int = 2
 const left int = 3
 const right int = 4
 
-type coordinate struct {
-	x int
-	y int
-}
-
 type cell struct {
 	x         int
 	y         int
