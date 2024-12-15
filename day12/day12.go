@@ -17,7 +17,6 @@ const right int = 4
 type cell struct {
 	x         int
 	y         int
-	index     int
 	direction int
 }
 
@@ -28,7 +27,7 @@ var visited [][]bool
 
 var dx = []int{-1, 1, 0, 0}
 var dy = []int{0, 0, -1, 1}
-var dir = []int{1, 2, 3, 4}
+var dir = []int{up, down, left, right}
 
 var sideMap map[byte][]cell
 
@@ -128,7 +127,7 @@ func dfs2(x int, y int) int {
 
 		if isOut(_x, _y) || grid[_x][_y] != grid[x][y] {
 			memo := sideMap[grid[x][y]]
-			memo = append(memo, cell{_x, _y, len(memo), dir[i]})
+			memo = append(memo, cell{_x, _y, dir[i]})
 			sideMap[grid[x][y]] = memo
 			continue
 		}
@@ -163,7 +162,7 @@ func countSidesForDirection(list []cell, direction int) int {
 	sides := 1
 
 	for i := 1; i < len(sameDirList); i++ {
-		if isAdjacent(sameDirList[i], sameDirList[i-1], direction) {
+		if isAdjacent(sameDirList[i], sameDirList[i-1]) {
 			continue
 		}
 		sides++
@@ -210,19 +209,7 @@ func sortByColumn(list []cell) {
 	})
 }
 
-func isPartOfSameXAxis(a cell, b cell) bool {
-	return a.x == b.x
-}
-
-func isPartOfSameYAxis(a cell, b cell) bool {
-	return a.y == b.y
-}
-
-func isPartOfSameSide(a cell, b cell, direction int) bool {
-	return a.direction == b.direction
-}
-
-func isAdjacent(a cell, b cell, direction int) bool {
+func isAdjacent(a cell, b cell) bool {
 	if a.x == b.x {
 		return int(math.Abs(float64((b.y - a.y)))) == 1
 	}
