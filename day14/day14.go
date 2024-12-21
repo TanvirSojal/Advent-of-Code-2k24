@@ -1,4 +1,4 @@
-// problem: https://adventofcode.com/2024/day/13
+// problem: https://adventofcode.com/2024/day/14
 package main
 
 import (
