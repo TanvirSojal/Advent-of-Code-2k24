@@ -31,21 +31,155 @@ func main() {
 
 	grid, moves := parseInput(file)
 
+	warehouse := getWareHouseMap(grid)
+
 	robot := getRobotPosition(grid)
 
 	moveRobot(robot, grid, moves)
 
-	printGrid(grid)
+	warehouseRobot := getRobotPosition(warehouse)
 
+	moveWarehouseRobot(warehouseRobot, warehouse, moves)
+
+	printGrid(grid)
 	calculateGps(grid)
+
+	printGrid(warehouse)
+	calculateGps(warehouse)
+}
+
+func moveWarehouseRobot(robot position, grid [][]rune, moves []int) {
+	for _, direction := range moves {
+		possible, movables := findMovables(grid, robot, direction)
+		if possible {
+			robot = moveMovables(grid, movables, direction)
+		}
+	}
+}
+
+func findMovables(grid [][]rune, start position, direction int) (bool, []position) {
+	dx, dy := getDelta(direction)
+	possible, movables := canMove(grid, start.x, start.y, dx, dy, direction)
+	return possible, movables
+}
+
+func canMove(grid [][]rune, x int, y int, dx int, dy int, direction int) (bool, []position) {
+	if grid[x][y] == '#' {
+		return false, make([]position, 0)
+	}
+	if grid[x][y] == '.' {
+		return true, make([]position, 0)
+	}
+
+	possible := false
+	movables := make([]position, 0)
+
+	ch := grid[x][y]
+
+	if ch == '@' {
+		_possible, _movables := canMove(grid, x+dx, y+dy, dx, dy, direction)
+
+		possible = _possible
+
+		if _possible {
+			movables = append(movables, _movables...)
+			movables = append(movables, position{x, y})
+		}
+	} else if ch == '[' || ch == ']' {
+		if direction == left || direction == right {
+			_possible, _movables := canMove(grid, x+dx, y+dy, dx, dy, direction)
+			possible = _possible
+
+			if _possible {
+				movables = append(movables, _movables...)
+				movables = append(movables, position{x, y})
+			}
+		} else {
+			_left, _right := 0, 0
+
+			if ch == '[' {
+				_left = y
+				_right = y + 1
+			} else {
+				_left = y - 1
+				_right = y
+			}
+
+			possibleLeft, movablesLeft := canMove(grid, x+dx, _left+dy, dx, dy, direction)
+			possibleRight, movablesRight := canMove(grid, x+dx, _right+dy, dx, dy, direction)
+			possible = possibleLeft && possibleRight
+
+			if possibleLeft && possibleRight {
+				movables = append(movables, movablesLeft...)
+				movables = append(movables, movablesRight...)
+				movables = append(movables, position{x, _left})
+				movables = append(movables, position{x, _right})
+			}
+		}
+
+		return possible, movables
+	}
+	return possible, movables
+}
+
+func moveMovables(grid [][]rune, movables []position, direction int) position {
+	newRobotPosition := position{}
+
+	mp := make(map[position]rune)
+
+	for _, pos := range movables {
+		mp[pos] = grid[pos.x][pos.y]
+	}
+
+	dx, dy := getDelta(direction)
+
+	for _, pos := range movables {
+		ch := mp[pos]
+		grid[pos.x+dx][pos.y+dy] = ch
+		grid[pos.x][pos.y] = '.'
+
+		if ch == '@' {
+			newRobotPosition.x = pos.x + dx
+			newRobotPosition.y = pos.y + dy
+		}
+	}
+
+	return newRobotPosition
+}
+
+func getWareHouseMap(grid [][]rune) [][]rune {
+	warehouse := make([][]rune, len(grid))
+
+	for i := range grid {
+		row := make([]rune, 0)
+		for j := range grid[i] {
+			switch grid[i][j] {
+			case '#':
+				row = append(row, '#')
+				row = append(row, '#')
+			case 'O':
+				row = append(row, '[')
+				row = append(row, ']')
+			case '.':
+				row = append(row, '.')
+				row = append(row, '.')
+			case '@':
+				row = append(row, '@')
+				row = append(row, '.')
+			}
+		}
+		warehouse[i] = row
+	}
+
+	return warehouse
 }
 
 func calculateGps(grid [][]rune) {
 	ans := 0
 
-	for i := range(grid) {
-		for j := range(grid[i]) {
-			if (grid[i][j] == 'O'){
+	for i := range grid {
+		for j := range grid[i] {
+			if grid[i][j] == 'O' || grid[i][j] == '[' {
 				ans += (100 * i) + j
 			}
 		}
@@ -55,18 +189,18 @@ func calculateGps(grid [][]rune) {
 }
 
 func moveRobot(robot position, grid [][]rune, moves []int) {
-	for _, direction := range(moves) {
+	for _, direction := range moves {
 		freeSpace := findSpace(grid, robot, direction)
 		robot = moveAndPush(grid, robot, freeSpace, direction)
-	} 
+	}
 }
 
-func findSpace(grid [][]rune,  start position, direction int) position {
+func findSpace(grid [][]rune, start position, direction int) position {
 	dx, dy := getDelta(direction)
 
 	initial := start
 
-	for grid[start.x + dx][start.y + dy] != '#' {
+	for grid[start.x+dx][start.y+dy] != '#' {
 		start.x += dx
 		start.y += dy
 
@@ -83,15 +217,15 @@ func moveAndPush(grid [][]rune, from position, to position, direction int) posit
 
 	robot := from
 
-	for to.x != from.x || to.y != from.y{
-		grid[to.x][to.y] = grid[to.x - dx][to.y - dy]
+	for to.x != from.x || to.y != from.y {
+		grid[to.x][to.y] = grid[to.x-dx][to.y-dy]
 
 		if grid[to.x][to.y] == '@' {
 			robot = to
 		}
 
 		to.x -= dx
-		to.y -=dy
+		to.y -= dy
 
 		grid[to.x][to.y] = '.'
 	}
@@ -99,10 +233,10 @@ func moveAndPush(grid [][]rune, from position, to position, direction int) posit
 	return robot
 }
 
-func getDelta(move int) (int, int){
+func getDelta(move int) (int, int) {
 	switch move {
-		case up: 
-			return -1, 0
+	case up:
+		return -1, 0
 	case down:
 		return 1, 0
 	case left:
@@ -113,10 +247,10 @@ func getDelta(move int) (int, int){
 	return 0, 0
 }
 
-func getRobotPosition(grid [][]rune) position{
-	for i := range(grid) {
-		for j := range(grid[i]) {
-			if grid[i][j] == '@'{
+func getRobotPosition(grid [][]rune) position {
+	for i := range grid {
+		for j := range grid[i] {
+			if grid[i][j] == '@' {
 				return position{i, j}
 			}
 		}
@@ -143,7 +277,7 @@ func parseInput(file *os.File) ([][]rune, []int) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		for _, ch := range(line) {
+		for _, ch := range line {
 			moves = append(moves, getMove(ch))
 		}
 	}
@@ -153,7 +287,7 @@ func parseInput(file *os.File) ([][]rune, []int) {
 
 func parseRow(line string) []rune {
 	row := make([]rune, 0)
-	for _, ch := range(line) {
+	for _, ch := range line {
 		row = append(row, ch)
 	}
 	return row
@@ -174,8 +308,8 @@ func getMove(ch rune) int {
 }
 
 func printGrid(grid [][]rune) {
-	for i := range(grid) {
-		for j := range(grid[i]) {
+	for i := range grid {
+		for j := range grid[i] {
 			fmt.Printf("%c", grid[i][j])
 		}
 		fmt.Println()
