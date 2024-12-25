@@ -5,14 +5,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 type position struct {
 	x, y int
-}
-
-type robot struct {
-	position position
 }
 
 const up = 1
@@ -126,6 +123,14 @@ func moveMovables(grid [][]rune, movables []position, direction int) position {
 	newRobotPosition := position{}
 
 	mp := make(map[position]rune)
+
+	// sort the movable cells according to direction
+	// so that no cell overrides another
+	if direction == up {
+		sortAscending(movables)
+	} else if direction == down {
+		sortDescending(movables)
+	}
 
 	for _, pos := range movables {
 		mp[pos] = grid[pos.x][pos.y]
@@ -305,6 +310,24 @@ func getMove(ch rune) int {
 		return right
 	}
 	return 0
+}
+
+func sortAscending(list []position) {
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].x == list[j].x {
+			return list[i].y < list[j].y
+		}
+		return list[i].x < list[j].x
+	})
+}
+
+func sortDescending(list []position) {
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].x == list[j].x {
+			return list[i].y > list[j].y
+		}
+		return list[i].x > list[j].x
+	})
 }
 
 func printGrid(grid [][]rune) {
